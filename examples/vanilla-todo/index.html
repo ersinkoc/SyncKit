@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vanilla JS Todo - SyncKit</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-bar {
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #d1fae5;
+      color: #065f46;
+      transition: all 0.3s;
+    }
+
+    .status-bar.offline {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .sync-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .add-todo {
+      padding: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    .todo-list {
+      padding: 1.5rem;
+      min-height: 300px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      background: #f9fafb;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .todo-item.completed {
+      opacity: 0.6;
+    }
+
+    .todo-item.completed .todo-title {
+      text-decoration: line-through;
+    }
+
+    .todo-title {
+      flex: 1;
+      font-size: 1rem;
+      color: #374151;
+    }
+
+    .delete-btn {
+      padding: 0.5rem 1rem;
+      background: #ef4444;
+      font-size: 0.875rem;
+    }
+
+    .delete-btn:hover {
+      background: #dc2626;
+    }
+
+    .debug-panel {
+      padding: 1.5rem;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .debug-panel h3 {
+      margin-bottom: 1rem;
+      color: #374151;
+    }
+
+    .queue-item {
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      background: white;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+
+    .queue-item .status {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      margin-left: 0.5rem;
+    }
+
+    .status-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-syncing {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .status-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="status-bar" id="statusBar">
+      <div class="status-indicator">
+        <span class="dot"></span>
+        <span id="statusText">Online</span>
+      </div>
+      <div class="sync-stats">
+        <span>Queue: <span id="statTotal">0</span></span>
+        <span>Pending: <span id="statPending">0</span></span>
+        <span>Syncing: <span id="statSyncing">0</span></span>
+      </div>
+    </div>
+
+    <div class="add-todo">
+      <input type="text" id="todoInput" placeholder="What needs to be done?" />
+      <button id="addBtn">Add Todo</button>
+    </div>
+
+    <div class="todo-list" id="todoList"></div>
+
+    <div class="debug-panel">
+      <h3>Sync Queue (<span id="queueCount">0</span>)</h3>
+      <div id="queueList"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import SyncKit (in production, use your bundler)
+    // import { createSyncKit } from '@oxog/synckit'
+
+    // For this example, we'll simulate the SyncKit behavior
+    class SimpleSyncKit {
+      constructor(config) {
+        this.config = config
+        this.queue = []
+        this.todos = []
+        this.listeners = {}
+      }
+
+      async init() {
+        console.log('SyncKit initialized')
+        this.updateUI()
+      }
+
+      push(operation) {
+        const op = {
+          id: Date.now().toString(),
+          ...operation,
+          status: 'pending',
+          attempts: 0,
+          createdAt: Date.now(),
+        }
+
+        this.queue.push(op)
+        this.emit('push', op)
+        this.updateUI()
+
+        // Simulate sync
+        setTimeout(() => this.syncOperation(op), 1000)
+
+        return {
+          id: op.id,
+          rollback: () => {
+            this.queue = this.queue.filter(q => q.id !== op.id)
+            this.updateUI()
+          },
+        }
+      }
+
+      async syncOperation(op) {
+        op.status = 'syncing'
+        this.emit('sync-start', op)
+        this.updateUI()
+
+        try {
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 500))
+
+          if (Math.random() > 0.9) {
+            throw new Error('Random failure for testing')
+          }
+
+          op.status = 'success'
+          this.emit('sync-success', op)
+
+          // Remove from queue after success
+          setTimeout(() => {
+            this.queue = this.queue.filter(q => q.id !== op.id)
+            this.updateUI()
+          }, 2000)
+        } catch (error) {
+          op.status = 'failed'
+          op.lastError = error.message
+          this.emit('sync-error', { operation: op, error })
+        }
+
+        this.updateUI()
+      }
+
+      on(event, handler) {
+        if (!this.listeners[event]) {
+          this.listeners[event] = []
+        }
+        this.listeners[event].push(handler)
+        return () => {
+          this.listeners[event] = this.listeners[event].filter(h => h !== handler)
+        }
+      }
+
+      emit(event, data) {
+        if (this.listeners[event]) {
+          this.listeners[event].forEach(handler => handler(data))
+        }
+      }
+
+      updateUI() {
+        // Update stats
+        document.getElementById('statTotal').textContent = this.queue.length
+        document.getElementById('statPending').textContent =
+          this.queue.filter(q => q.status === 'pending').length
+        document.getElementById('statSyncing').textContent =
+          this.queue.filter(q => q.status === 'syncing').length
+
+        // Update queue using safe DOM methods
+        document.getElementById('queueCount').textContent = this.queue.length
+        const queueList = document.getElementById('queueList')
+        queueList.textContent = '' // Clear existing items
+
+        this.queue.forEach(op => {
+          const item = document.createElement('div')
+          item.className = 'queue-item'
+
+          const method = document.createElement('strong')
+          method.textContent = op.method
+          item.appendChild(method)
+
+          item.appendChild(document.createTextNode(' ' + op.resource + ' '))
+
+          const status = document.createElement('span')
+          status.className = `status-${op.status}`
+          status.textContent = op.status
+          item.appendChild(status)
+
+          queueList.appendChild(item)
+        })
+      }
+    }
+
+    // Initialize SyncKit
+    const sync = new SimpleSyncKit({
+      name: 'vanilla-todo',
+      storage: 'indexeddb',
+    })
+
+    await sync.init()
+
+    // App state
+    let todos = []
+
+    // Update online/offline status
+    function updateStatus() {
+      const statusBar = document.getElementById('statusBar')
+      const statusText = document.getElementById('statusText')
+
+      if (navigator.onLine) {
+        statusBar.classList.remove('offline')
+        statusText.textContent = 'Online'
+      } else {
+        statusBar.classList.add('offline')
+        statusText.textContent = 'Offline'
+      }
+    }
+
+    window.addEventListener('online', updateStatus)
+    window.addEventListener('offline', updateStatus)
+    updateStatus()
+
+    // Render todos using safe DOM methods
+    function renderTodos() {
+      const todoList = document.getElementById('todoList')
+      todoList.textContent = '' // Clear existing todos
+
+      todos.forEach(todo => {
+        const item = document.createElement('div')
+        item.className = `todo-item${todo.completed ? ' completed' : ''}`
+        item.dataset.id = todo.id
+
+        const checkbox = document.createElement('input')
+        checkbox.type = 'checkbox'
+        checkbox.checked = todo.completed
+        checkbox.addEventListener('change', () => toggleTodo(todo.id))
+        item.appendChild(checkbox)
+
+        const title = document.createElement('span')
+        title.className = 'todo-title'
+        title.textContent = todo.title
+        item.appendChild(title)
+
+        const deleteBtn = document.createElement('button')
+        deleteBtn.className = 'delete-btn'
+        deleteBtn.textContent = 'Delete'
+        deleteBtn.addEventListener('click', () => deleteTodo(todo.id))
+        item.appendChild(deleteBtn)
+
+        todoList.appendChild(item)
+      })
+    }
+
+    // Add todo
+    window.addTodo = function() {
+      const input = document.getElementById('todoInput')
+      const title = input.value.trim()
+
+      if (!title) return
+
+      const todo = {
+        id: Date.now().toString(),
+        title,
+        completed: false,
+      }
+
+      // Optimistic update
+      todos.push(todo)
+      renderTodos()
+
+      // Queue for sync
+      sync.push({
+        resource: 'todos',
+        method: 'POST',
+        payload: todo,
+      })
+
+      input.value = ''
+    }
+
+    // Toggle todo
+    window.toggleTodo = function(id) {
+      const todo = todos.find(t => t.id === id)
+      if (!todo) return
+
+      todo.completed = !todo.completed
+      renderTodos()
+
+      sync.push({
+        resource: `todos/${id}`,
+        method: 'PUT',
+        payload: todo,
+      })
+    }
+
+    // Delete todo
+    window.deleteTodo = function(id) {
+      todos = todos.filter(t => t.id !== id)
+      renderTodos()
+
+      sync.push({
+        resource: `todos/${id}`,
+        method: 'DELETE',
+        payload: null,
+      })
+    }
+
+    // Add todo on Enter key
+    document.getElementById('todoInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addTodo()
+      }
+    })
+
+    // Add todo on button click
+    document.getElementById('addBtn').addEventListener('click', addTodo)
+
+    console.log('Vanilla Todo App loaded with SyncKit!')
+  </script>
+</body>
+</html>

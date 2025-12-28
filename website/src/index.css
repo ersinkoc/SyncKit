@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 6%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 91% 60%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 271 91% 65%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 142 76% 36%;
+    --radius: 0rem;
+  }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 142 76% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 91% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 271 91% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 142 76% 32%;
+    --radius: 0rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-mono;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image:
+      linear-gradient(to right, rgb(23 23 23 / 0.2) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(23 23 23 / 0.2) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .light body {
+    background-image:
+      linear-gradient(to right, rgb(200 200 200 / 0.3) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(200 200 200 / 0.3) 1px, transparent 1px);
+  }
+
+  code, pre {
+    @apply font-mono;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-mono font-bold tracking-tighter uppercase;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-emerald-500/30 border-2 border-neutral-800;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-emerald-500/50;
+}
+
+.light ::-webkit-scrollbar-track {
+  @apply bg-neutral-200;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  @apply bg-emerald-600/40 border-2 border-neutral-300;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  @apply bg-emerald-600/60;
+}
+
+/* Code block styling */
+pre {
+  @apply p-4 overflow-x-auto bg-neutral-900/50 border border-neutral-800;
+  position: relative;
+}
+
+pre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(16, 185, 129, 0.02) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  animation: scanline 8s linear infinite;
+}
+
+code {
+  @apply text-sm font-mono;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Terminal window effect */
+.terminal-window {
+  @apply bg-neutral-900/50 border border-neutral-800 backdrop-blur-md;
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.1),
+    0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.light .terminal-window {
+  @apply bg-white/80 border border-neutral-300;
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.2),
+    0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.terminal-header {
+  @apply h-8 bg-neutral-800/50 border-b border-neutral-700 flex items-center px-4 gap-2;
+}
+
+.light .terminal-header {
+  @apply bg-neutral-200/80 border-b border-neutral-300;
+}
+
+.terminal-dot {
+  @apply w-3 h-3 rounded-full;
+}
+
+/* Glow effects */
+.glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(192, 132, 252, 0.3);
+}
+
+/* Blinking cursor */
+.cursor::after {
+  content: '▌';
+  @apply text-emerald-500 animate-blink ml-1;
+}
+
+/* Syntax highlighting colors */
+.token.comment {
+  @apply text-neutral-500;
+}
+
+.token.string {
+  @apply text-emerald-400;
+}
+
+.token.keyword {
+  @apply text-blue-400;
+}
+
+.token.function {
+  @apply text-purple-400;
+}
+
+.token.number {
+  @apply text-amber-400;
+}
+
+.token.operator {
+  @apply text-rose-400;
+}
